@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  simple-dev-container:
+    build:
+      context: .
+    container_name: msip-simple-dev-container
+    ports:
+      - 3000:3000
+      - 9229:9229
+    volumes:
+      - ./:/app
+    networks:
+      - ourcatalog_network
+  products-database:
+    image: postgres:13-alpine
+    container_name: msip-ourcatalog-products-database
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB_NAME}
+    volumes:
+      - msip_ourcatalog_products_db_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ourcatalog_network
+  msip-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: msip-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: ${PG_PASSWORD}
+    ports:
+      - 8100:80
+    networks:
+      - ourcatalog_network
+
+networks:
+  ourcatalog_network:
+    driver: bridge
+
+volumes:
+  msip_ourcatalog_products_db_data:
